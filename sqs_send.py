@@ -1,16 +1,20 @@
 import boto3
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+# Lendo URL da fila
+QUEUE_URL = os.getenv('QUEUE_URL')
 
 # Criando o cliente SQS
 sqs = boto3.client('sqs')
 
-# URL da fila SQS
-queue_url = 'https://sqs.us-east-1.amazonaws.com/148761673709/minha-fila-standard'
+# Enviando 49 mensagens
+for i in range(1, 50):
+    response = sqs.send_message(
+        QueueUrl=QUEUE_URL,
+        MessageBody=f'Mensagem número {i} para minha-fila-standard'
+    )
 
-# Enviando uma mensagem para a fila
-response = sqs.send_message(
-    QueueUrl=queue_url,
-    MessageBody='Mensagem de exemplo para minha-fila-standard'
-)
-
-# Exibindo o ID da mensagem enviada
-print(f"Mensagem enviada com sucesso! ID da mensagem: {response['MessageId']}")
+    print(f"Mensagem {i} enviada com sucesso! ID: {response['MessageId']}")

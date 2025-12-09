@@ -1,28 +1,36 @@
 import boto3
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+# Lendo a URL da fila
+QUEUE_URL = os.getenv('QUEUE_URL')
 
 # Criando o cliente SQS
 sqs = boto3.client('sqs')
 
-# URL da fila SQS
-queue_url = 'https://sqs.us-east-1.amazonaws.com/148761673709/minha-fila-standard'
+print("Iniciando leitura da fila...")
 
-# Recebendo mensagens da fila
-response = sqs.receive_message(
-    QueueUrl=queue_url,
-    MaxNumberOfMessages=10,  # Número máximo de mensagens a receber
-    WaitTimeSeconds=10       # Tempo máximo de espera (em segundos)
-)
+while True:
+    response = sqs.receive_message(
+        QueueUrl=QUEUE_URL,
+        MaxNumberOfMessages=10,  # máximo permitido por chamada
+        WaitTimeSeconds=10      # long polling
+    )
 
-# Verificando se há mensagens recebidas
-if 'Messages' in response:
+    # Se não houver mensagens, encerra o loop
+    if 'Messages' not in response:
+        print("Fila vazia. Todas as mensagens foram lidas.")
+        break
+
     for message in response['Messages']:
         print(f"Mensagem recebida: {message['Body']}")
-        
+
         # Excluindo a mensagem da fila após o processamento
         sqs.delete_message(
-            QueueUrl=queue_url,
+            QueueUrl=QUEUE_URL,
             ReceiptHandle=message['ReceiptHandle']
         )
+
         print(f"Mensagem excluída: ID {message['MessageId']}")
-else:
-    print("Nenhuma mensagem disponível na fila.")
